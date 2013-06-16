@@ -14,15 +14,18 @@ float getAccAngle() {
   float acc_data[3];
   Accel.get_Gxyz(acc_data);
   
-     theta = atan(acc_data[0]/sqrt(acc_data[1]*acc_data[1] + acc_data[2]*acc_data[2]));
-    psi = atan(acc_data[1]/sqrt(acc_data[0]*acc_data[0] + acc_data[2]*acc_data[2]));
-    phi=  atan(sqrt(acc_data[0]*acc_data[0] + acc_data[1]*acc_data[1])/acc_data[2]);
+    theta = atan(acc_data[0]/sqrt(acc_data[1]*acc_data[1] + acc_data[2]*acc_data[2]))*180/PI;
+    psi = atan(acc_data[1]/sqrt(acc_data[0]*acc_data[0] + acc_data[2]*acc_data[2]))*180/PI;
+    phi=  atan(sqrt(acc_data[0]*acc_data[0] + acc_data[1]*acc_data[1])/acc_data[2])*180/PI;
     
-    Serial.print("Theta: ");
+    
+    //Serial.print("Theta: ");
+    Serial.print(millis());
+    Serial.print(",");
     Serial.print(theta);
-    Serial.print(" Psi: ");
+    Serial.print(",");
     Serial.print(psi);
-    Serial.print(" Phi: ");
+    Serial.print(",");
     Serial.print(phi);
     
    return psi;
@@ -39,12 +42,15 @@ float getGyroValues(){
   gz = xyz[2];
 
   
-  Serial.print(" gx: ");
+ // Serial.print(" gx: ");
+  Serial.print(",");
   Serial.print(gx);
-  Serial.print(" gx: ");
-  Serial.print(gx);
-  Serial.print(" gx: ");
-  Serial.println(gx);
+  Serial.print(",");
+  Serial.print(gy);
+  Serial.print(",");
+  Serial.print(gz);
+  Serial.println("\r");
+
 
   return gx;
 }
