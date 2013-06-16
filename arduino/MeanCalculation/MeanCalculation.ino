@@ -16,7 +16,7 @@
 #include "ADXL345.h"
 #include <ITG3200.h>
 
-#define NUM_READINGS 10
+#define NUM_READINGS 100
 #define DIMENSION  3
 #define   GYR_Y                 0                              
 #define   ACC_Z                 1                              
