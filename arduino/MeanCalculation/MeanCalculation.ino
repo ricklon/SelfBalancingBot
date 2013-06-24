@@ -152,6 +152,7 @@ void getAccAngles(float *Acc_tpp) {
 // ------------------ read gyroscope angles ---------------------
 
 void getGyroValues(float *Gyro_xyz){
+  //Gyro rate of degrees/second
 
   gyro.readGyro(Gyro_xyz);
 

@@ -9,7 +9,8 @@
     float P_00 = 0, P_01 = 0, P_10 = 0, P_11 = 0;	
     float dt, y, S;
     float K_0, K_1;
-
+    
+  //Angl is from Accelerometer, and rate is from Gyro
   float kalmanCalculate(float newAngle, float newRate,int looptime) {
     dt = float(looptime)/1000;                                    // XXXXXXX arevoir
     x_angle += dt * (newRate - x_bias);
