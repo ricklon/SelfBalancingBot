@@ -3,9 +3,10 @@
 // This example code is in the public domain.
 #include <Servo.h>
 
-#define SERVO1_PIN 17
-#define SERVO2_PIN 18
-#define LED_PIN 11
+#define SERVO1_PIN 10
+#define SERVO2_PIN 17
+#define POT_PIN 18
+#define LED_PIN A4
 
 Servo servo1;
 Servo servo2;
@@ -55,7 +56,7 @@ void loop()
   Serial.print(" LED: ");
   Serial.print(ledState);
   
-  int pos = analogRead(A7);
+  int pos = analogRead(POT_PIN);
   pos =  map(pos, 0, 1023, 1250, 1750);
   servo1.writeMicroseconds(pos); // tell servo1 to go to position in variable 'pos' 
   servo2.writeMicroseconds(pos); // tell servo2 to go to position in variable 'pos'
