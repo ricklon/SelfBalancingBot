@@ -4,7 +4,7 @@
 #include <Servo.h>
 
 #define SERVO1_PIN 17
-#define SERVO2_PIN 18
+#define SERVO2_PIN 10
 #define LED_PIN 11
 #define SERVO_ZERO 1500
 

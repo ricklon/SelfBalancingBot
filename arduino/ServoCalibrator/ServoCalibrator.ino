@@ -55,7 +55,7 @@ void loop()
   Serial.print(" LED: ");
   Serial.print(ledState);
   
-  int pos = analogRead(A0);
+  int pos = analogRead(A7);
   pos =  map(pos, 0, 1023, 1250, 1750);
   servo1.writeMicroseconds(pos); // tell servo1 to go to position in variable 'pos' 
   servo2.writeMicroseconds(pos); // tell servo2 to go to position in variable 'pos'
