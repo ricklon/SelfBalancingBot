@@ -2,7 +2,7 @@
 #include "SBRservo.h"
 
 #define SERVO1_PIN 17
-#define SERVO2_PIN 10
+#define SERVO2_PIN 18
 #define WAIT 3000
 #define DEG_WRITE_WAIT 1000 // Duration to walk through partial rotation, this must be greater than SPD_WRITE_WAIT
 #define WINDOW 5 // Millisecond 
