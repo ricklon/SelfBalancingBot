@@ -6,7 +6,7 @@
 #include "Arduino.h"
 #include <Servo.h>
 
-#define SPD_WRITE_WAIT 50 // Duration limit on Chaning the Speed, found by comparting the output rate or the adjustment to the actual rotation rate.
+#define SPD_WRITE_WAIT 50000 // Duration limit on Chaning the Speed in microseconds
 
 Servo servo1;
 Servo servo2;

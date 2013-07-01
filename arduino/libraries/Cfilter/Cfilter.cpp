@@ -1,9 +1,10 @@
 
 
 #include "Arduino.h"
-#include "ADXL345.h"
+#include <ADXL345.h>
 #include <math.h>
 #include <ITG3200.h>
+#include "Cfilter.h"
 
 
 
@@ -14,7 +15,25 @@ ADXL345 Accel;
 int  gx = 0, gy = 0, gz = 0; //Compute Variables
 float theta = 0, psi = 0, phi = 0, normAngle = 0, normACC = 0, alpha = 0, angle = 0; //Compute Variables
 
+void Cfilterbegin(){
+   //Turning on the accelerometer
+  Accel.init(ADXL345_ADDR_ALT_LOW);
+  Accel.set_bw(ADXL345_BW_12);
 
+  gyro.reset();
+  // Use ITG3200_ADDR_AD0_HIGH or ITG3200_ADDR_AD0_LOW as the ITG3200 address 
+  // depending on how AD0 is connected on your breakout board, check its schematics for details
+  gyro.init(ITG3200_ADDR_AD0_LOW);  
+  Serial.print("zeroCalibrating...");
+  gyro.zeroCalibrate(2500,2);
+  Serial.println("done.");
+
+  alpha = float(TIME_CONSTANT) / (float(TIME_CONSTANT) + float(SAMPLE_RATE)); // calculate the scaling coefficent
+  Serial.print("Scaling Coefficent: ");
+  Serial.println(alpha); 
+
+  delay(100); 
+}
 
 // ------------------ read Accelerometer angles ---------------------
 

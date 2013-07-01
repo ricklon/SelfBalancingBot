@@ -14,7 +14,7 @@
 #define REPORT_RATE   2000 // Assumed Sampled rate in microseconds
 
 #include "Arduino.h"
-#include "ADXL345.h"
+#include <ADXL345.h>
 #include <math.h>
 #include <ITG3200.h>
 
@@ -25,6 +25,7 @@ extern ADXL345 Accel;
 extern int  gx, gy, gz; //Compute Variables
 extern float theta, psi, phi, normAngle, normACC, alpha, angle; //Compute Variables
 
+void Cfilterbegin();
 void getAccAngle();
 void getGyroValues();
 float compositeFilter(float acc, int gyro, unsigned long rate, float angle);

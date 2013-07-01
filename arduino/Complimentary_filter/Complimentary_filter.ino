@@ -5,11 +5,11 @@
  *
  */
 #include <Wire.h>
-#include "Arduino.h"
-#include "ADXL345.h"
+#include <Arduino.h>
+#include <ADXL345.h>
 #include <math.h>
 #include <ITG3200.h>
-#include "Cfilter.h"
+#include <Cfilter.h>
 
 unsigned long curMicro = 0, lastMicro = 0, prevMicro = 0, rate = 0;
 
@@ -21,23 +21,9 @@ void setup()
 {
   Serial.begin(115200); // Fastest Transfer rate?
   Wire.begin();         
-  //Turning on the accelerometer
-  Accel.init(ADXL345_ADDR_ALT_LOW);
-  Accel.set_bw(ADXL345_BW_12);
-
-  gyro.reset();
-  // Use ITG3200_ADDR_AD0_HIGH or ITG3200_ADDR_AD0_LOW as the ITG3200 address 
-  // depending on how AD0 is connected on your breakout board, check its schematics for details
-  gyro.init(ITG3200_ADDR_AD0_LOW);	
-  Serial.print("zeroCalibrating...");
-  gyro.zeroCalibrate(2500,2);
-  Serial.println("done.");
-
-  alpha = float(TIME_CONSTANT) / (float(TIME_CONSTANT) + float(SAMPLE_RATE)); // calculate the scaling coefficent
-  Serial.print("Scaling Coefficent: ");
-  Serial.println(alpha);  
-
-  delay(100);
+ 
+  Cfilterbegin();
+  
   lastMicro = micros();
   prevMicro = lastMicro;
 }
