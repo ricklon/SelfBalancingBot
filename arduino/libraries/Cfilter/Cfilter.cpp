@@ -13,7 +13,7 @@ ADXL345 Accel;
 
 
 int  gx = 0, gy = 0, gz = 0; //Compute Variables
-float theta = 0, psi = 0, phi = 0, normAngle = 0, normACC = 0, alpha = 0, angle = 0; //Compute Variables
+float theta = 0, psi = 0, phi = 0, normAngle = 0, normACC = 0, alpha = 0; //Compute Variables
 
 void Cfilterbegin(){
    //Turning on the accelerometer
@@ -33,6 +33,17 @@ void Cfilterbegin(){
   Serial.println(alpha); 
 
   delay(100); 
+}
+
+// ------------------ Convienence Function -------------------------
+
+float absMax(float a, float b){
+	if (abs(a) > abs(b)){
+		return a;
+	}
+	else {
+		return b;
+	}
 }
 
 // ------------------ read Accelerometer angles ---------------------
@@ -61,7 +72,7 @@ void getGyroValues(){
 
 //------------------ Composite Filter ----------------
 
-float compositeFilter(float acc, int gyro, unsigned long rate, float angle){
-  return alpha * (angle + (gyro * float(rate)))  + (1 - alpha) * acc; // th eactual filter
+float compositeFilter(float acc, float gyro, unsigned long rate, float angle){
+  return alpha * (angle + (gyro * float(rate)))  + (1 - alpha) * acc; // the actual filter
 }
 

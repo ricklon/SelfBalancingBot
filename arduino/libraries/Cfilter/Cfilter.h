@@ -23,12 +23,13 @@ extern ADXL345 Accel;
 
 
 extern int  gx, gy, gz; //Compute Variables
-extern float theta, psi, phi, normAngle, normACC, alpha, angle; //Compute Variables
+extern float theta, psi, phi, normAngle, normACC, alpha; //Compute Variables
 
+float absMax(float a, float b);
 void Cfilterbegin();
 void getAccAngle();
 void getGyroValues();
-float compositeFilter(float acc, int gyro, unsigned long rate, float angle);
+float compositeFilter(float acc, float gyro, unsigned long rate, float angle);
 
 
 

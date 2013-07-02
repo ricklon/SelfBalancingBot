@@ -52,7 +52,10 @@ int setSPD(int spd, unsigned long curTime)
   /*
  This is an aproximated calibration curve, was built by hand using the servocalibrate degree sketch
    */
-  if ( 270 < spd && spd <= 300){
+  if ( spd > 300){
+    pos = 1700;
+  }
+  else if ( 270 < spd && spd <= 300){
     pos =  mapRange(spd, 270 , 300, 1600, 1700) + 0.5; 
   } 
   else if ( 180 < spd && spd <= 270) {
@@ -79,11 +82,11 @@ int setSPD(int spd, unsigned long curTime)
   else if ( -300 <= spd && spd <= -270) {
     pos =  mapRange(spd, -300 , -270, 1300, 1400)+ 0.5; 
   }
-  else { // return -2 if you specified an speed that was out of range
-    return -2;
+  else if (spd < -300 ) { 
+    pos = 1300;
   }
 
-  servo1.writeMicroseconds(pos);              // Actully setting the speed.
+  servo1.writeMicroseconds(-pos);              // Actully setting the speed.
   servo2.writeMicroseconds(pos);
   return pos; // otherwise return the pulse width value that came from the calibration curve.
 }
