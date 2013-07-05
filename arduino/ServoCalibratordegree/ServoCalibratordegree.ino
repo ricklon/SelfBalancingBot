@@ -3,8 +3,8 @@
 
 #include <Servo.h>
 
-#define SERVO1_PIN 17
-#define SERVO2_PIN 10
+#define SERVO1_PIN 10
+#define SERVO2_PIN 12
 #define LED_PIN 11
 #define SERVO_ZERO 1500
 
@@ -14,6 +14,7 @@ Servo servo1;
 Servo servo2;
 int acc = -100;
 int pos = 0;
+int rpos = 0;
 int reading = 0;
 int ledState = 0;
 //int lastTime = 0;
@@ -49,10 +50,11 @@ void loop()
   ledState += 1;
   if ((ledState % 2) == 0){
     digitalWrite(LED_PIN, HIGH);
-    //   int pos = analogRead(A0);
-    //    pos =  map(pos, 0, 1023, 1250, 1750);
-    servo1.writeMicroseconds(pos); // tell servo1 to go to position in variable 'pos' 
-    servo2.writeMicroseconds(pos); // tell servo2 to go to position in variable 'pos'
+    //  int pos = analogRead(A0);
+    //   pos =  map(pos, 0, 1023, 1250, 1750);
+    servo1.writeMicroseconds(pos); // tell servo1 to go to position in variable 'pos'
+    rpos = map(pos, 1300, 1700, 1700, 1300);
+    servo2.writeMicroseconds(rpos); // tell servo2 to go to position in variable 'pos'
   }
   else {
     digitalWrite(LED_PIN, LOW);
@@ -64,5 +66,5 @@ void loop()
   Serial.print(" Servo2: ");
   Serial.println(servo2.readMicroseconds());
 
-  delay(2000);
+  delay(10000);
 } 

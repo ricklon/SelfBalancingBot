@@ -11,8 +11,8 @@
 Servo servo1;
 Servo servo2;
 
-int pos = -300;
-
+int pos = 0;
+int rpos = 0;
 
 unsigned long spdTime; //speed clock, need seprate clocks to decouple calls for speed adjustment from calls for degree rotation
 unsigned long degTime; //degree clock
@@ -86,8 +86,9 @@ int setSPD(int spd, unsigned long curTime)
     pos = 1300;
   }
 
-  servo1.writeMicroseconds(-pos);              // Actully setting the speed.
-  servo2.writeMicroseconds(pos);
+  servo1.writeMicroseconds(pos);                 // Actully setting the speed.
+  rpos = mapRange(pos, 1300, 1700, 1700, 1300);   //Reverse the driection for the other wheel
+  servo2.writeMicroseconds(rpos);
   return pos; // otherwise return the pulse width value that came from the calibration curve.
 }
 

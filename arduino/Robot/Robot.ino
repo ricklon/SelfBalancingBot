@@ -11,7 +11,7 @@ The actual robot code
 #include <Cfilter.h>
 
 #define SERVO1_PIN 10
-#define SERVO2_PIN 17
+#define SERVO2_PIN 12
 #define POT_PIN 18
 #define LED_PIN 11
 #define REF_ANGLE_SAMPLES 500
@@ -57,14 +57,15 @@ void loop()
     angle = compositeFilter( acc, gyroRate, rate, angle); //angle tilt and move the clock up
     lastMicro = curMicro;  
 
-    pot = analogRead(POT_PIN); // read the potentiometer
+//    pot = analogRead(POT_PIN); // read the potentiometer
 
-    kg =  map(pot, 0, 1023, 0, 100); // calculate the scaling coefficent
-    ka = 0.05;
+  //  kg =  map(pot, 0, 1023, 0, 100); // calculate the scaling coefficent
+    ka = 10;
+    kg = 2;
 
     spd = (kg * gyroRate) + (ka * (angle - refAngle)); // Compute the speed to set the acceleromter
 
-    resPos = setSPD(-spd, curMicro); //set the Speed 
+    resPos = setSPD(spd, curMicro); //set the Speed 
 
     if (resPos  != -1){ // Only print when we change something
       Serial.print(curMicro);
@@ -74,8 +75,8 @@ void loop()
       Serial.print(gyroRate);
       Serial.print(" , ");
       Serial.print(angle - refAngle); // remove the refrence from the display
-      Serial.print(" , ");
-      Serial.print(pot);
+//      Serial.print(" , ");
+ //     Serial.print(pot);
       Serial.print(" , ");
       Serial.print(kg);
       Serial.print(" , ");
