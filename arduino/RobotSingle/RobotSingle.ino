@@ -90,31 +90,41 @@ int setSPD(int spd, unsigned long curMicro)
     digitalWrite(LED_PIN, LOW);
   }
   else if ( 100 <= spd && spd < 200){
-    pos =  1600;
+    pos =  1650;
    digitalWrite(LED_PIN, HIGH); 
   }
-  else if ( 20 < spd && spd < 100){
-    pos =  1550;
+  else if ( 20 <= spd && spd < 100){
+    pos =  1600;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 3 < spd && spd < 20){
-    pos =  1525;
+  else if ( 5 <= spd && spd < 20){
+    pos =  1575;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -3 <= spd && spd <= 3) {
+  else if ( -1 < spd && spd < 5)
+  {
+     pos =  1550;
+    digitalWrite(LED_PIN, HIGH);
+  }
+  else if ( -1 <= spd && spd <= 1) {
     pos =  SERVO_CENTER;
     digitalWrite(LED_PIN, LOW);
   }
-  else if ( -20 < spd && spd < -3){
-    pos =  1475;
-    digitalWrite(LED_PIN, HIGH);
-  }
-  else if ( -100 < spd && spd < -30){
+  else if ( -5 < spd && spd < -1)
+  {
     pos =  1450;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -200 < spd && spd <= -100){
+  else if ( -20 < spd && spd <= -5){
+    pos =  1425;
+    digitalWrite(LED_PIN, HIGH);
+  }
+  else if ( -100 < spd && spd <= -20){
     pos =  1400;
+    digitalWrite(LED_PIN, HIGH);
+  }
+  else if ( -200 < spd && spd <= -100){
+    pos =  1350;
     digitalWrite(LED_PIN, HIGH);
   }
   else if (spd <= -200 ) { 
@@ -236,8 +246,8 @@ void loop()
     angle = compositeFilter( acc, gyroRate, rate, angle); //angle tilt and move the clock up
     lastMicro = curMicro;  
 
-    ka = .90;
-    kg = 0.5;
+    ka = 0.90;
+    kg = 0.05;
 
     spd = (kg * gyroRate) + (ka * (angle - refAngle)); // Compute the speed to set the acceleromter
 
