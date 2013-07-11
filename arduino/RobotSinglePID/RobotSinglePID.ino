@@ -8,21 +8,30 @@ The actual robot code
 #include <Servo.h>
 #include "ADXL345.h"
 
-#define DEBUG
+//setup stuff
+//#define DEBUG
+#define LED_PIN 11
+
+//Servo stuff
 #define SERVO1_PIN 10
 #define SERVO2_PIN 12
-#define LED_PIN 11
-#define REF_ANGLE_SAMPLES 1000 // Number of samples to calcualte the ref angle
 #define SPD_WRITE_WAIT 10 // Duration limit on Chaning the Speed in milli
+#define SERVO_CENTER 1500 // The center value of the servo (where it should be still)
+#define OUTPUT_GAIN 4
+
+
+//Cfilter stuff
 #define TIME_CONSTANT 250 // time constant in milli
 #define SAMPLE_RATE   7 // Assumed Sampled rate in milli
-#define SERVO_CENTER 1500 // The center value of the servo (where it should be still)
+
+//PID stuff
 #define KP 0.75
 #define KI 0.45
 #define KD 0.45
-#define OUTPUT_GAIN 4
-#define RESET_TIME 3000
+#define INTEGRAL_LIMIT 25
+#define REF_ANGLE_SAMPLES 1000 // Number of samples to calcualte the ref angle
 
+//Debug stuff
 #ifdef DEBUG
 #define DEBUG_BEGIN(x)   Serial.begin(x); // Fastest Transfer rate?
 #define DEBUG_PRINT(x)    Serial.print (x)
@@ -39,10 +48,28 @@ ITG3200 gyro = ITG3200();
 ADXL345 Accel;
 
 
-unsigned long curMilli = 0, lastMilli = 0, spdMilli = 0, resetMilli = 0; //Various time stamps
+unsigned long curMilli = 0;
+unsigned long lastMilli = 0;
+unsigned long spdMilli = 0;
+unsigned long resetMilli = 0; 
 
-int spd = 0, gyroRate = 0, resPos = 0, acc = 0, gx = 0, gy = 0, gz = 0, pos = 0, rpos = 0;
-float angle = 0.0, refAngle = 0.0, prevError = 0.0, integral = 0.0, theta = 0.0, psi = 0.0, alpha = 0.0, derivative = 0.0, rate = 0.0;
+int spd = 0;
+int resPos = 0;
+int gx = 0;
+int gy = 0;
+int gz = 0;
+int pos = 0;
+int rpos = 0;
+
+float angle = 0.0;
+float refAngle = 0.0;
+float prevError = 0.0;
+float integral = 0.0;
+float theta = 0.0;
+float psi = 0.0;
+float alpha = 0.0;
+float derivative = 0.0;
+float rate = 0.0;
 
 /*
 -------------- Servo mangment functions --------------------------
@@ -57,19 +84,8 @@ void SBRServoBegin(int pin1, int pin2, unsigned long curMilli)
 }
 
 /*
--------------- Alternative range mapping function --------------------------
- */
-
-//from: http://rosettacode.org/wiki/Map_range#C.2B.2B
-float mapRange(float s, float a1,float a2,float b1,float b2)  // Linear mapping function
-{
-  return b1 + (s-a1)*(b2-b1)/(a2-a1);
-}
-
-/*
 -------------- Speed Setting function --------------------------
  */
-
 
 int setSPD(int spd, unsigned long curMilli) 
 {
@@ -139,7 +155,7 @@ int setSPD(int spd, unsigned long curMilli)
   }
 
   servo1.writeMicroseconds(pos);              // Actully setting the speed.
-  rpos = mapRange(pos, 1300, 1700, 1700, 1300); // Reverse the direction for the other side
+  rpos = map(pos, 1300, 1700, 1700, 1300); // Reverse the direction for the other side
   servo2.writeMicroseconds(rpos);
   return abs(pos - SERVO_CENTER); //  return the pulse width value as an offset from center.
 }
@@ -208,7 +224,7 @@ void getGyroValues(){ // Simple reading of gyro values
 //------------------ Composite Filter ----------------
 
 float compositeFilter(float acc, float gyro, float rate, float angle){
-  return alpha * (angle + (gyro * float(rate)))  + (1 - alpha) * acc; // the actual filter
+  return alpha * (angle + (gyro * rate))  + (1 - alpha) * acc; // the actual filter
 }
 
 /*
@@ -233,7 +249,6 @@ void setup()
   DEBUG_PRINTLN(refAngle);
   digitalWrite(LED_PIN, LOW);
   lastMilli = millis();
-  resetMilli = lastMilli;
   SBRServoBegin(SERVO1_PIN, SERVO2_PIN, lastMilli);
 }
 
@@ -247,10 +262,10 @@ void loop()
 
     rate = (float(curMilli) - float(lastMilli)) / 1000.0; // Calculate the actual rate in seconds (Gryo read outs are in seconds).
 
-    gyroRate = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
-    acc = absMax(theta,psi);
+    int maxGyro = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
+    float maxAngle = absMax(theta,psi);
 
-    angle = compositeFilter( acc, gyroRate, rate, angle); //angle tilt and move the clock up
+    angle = compositeFilter( maxAngle, float(maxGyro), rate, angle); //angle tilt and move the clock up
     lastMilli = curMilli;  
 
     float error =  angle - refAngle;
@@ -259,14 +274,7 @@ void loop()
       error = 0;
     }
 
-    integral = integral + error * rate;
-    if (integral > 30){ // Integral drift correction
-      integral = 30;
-    }
-    else if (integral < -30){
-      integral = -30;
-    }
-
+    integral = constrain(integral + error * rate, -INTEGRAL_LIMIT, INTEGRAL_LIMIT); // constrain the integral so we don't have to relax from really far values 
     derivative = (error - prevError) / rate;
     spd = (KP * error) + (KI * integral) + (KD * derivative); // Compute the speed to set the acceleromter
     resPos = setSPD(OUTPUT_GAIN * spd, curMilli); //set the Speed 
@@ -276,13 +284,13 @@ void loop()
     if (resPos  != -1){ // Only print when we change something
       DEBUG_PRINT(curMilli);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(acc);
+      DEBUG_PRINT(maxAngle);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(gyroRate);
+      DEBUG_PRINT(maxGyro);
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(angle); // remove the refrence from the display
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(acc - angle); // remove the refrence from the display
+      DEBUG_PRINT(maxAngle - angle); // remove the refrence from the display
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(error);
       DEBUG_PRINT(" , ");
@@ -294,18 +302,13 @@ void loop()
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(derivative);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(spd);
+      DEBUG_PRINT(OUTPUT_GAIN * spd);
       DEBUG_PRINT(" , ");
       DEBUG_PRINTLN(resPos); 
     }
   }
   else if((curMilli - lastMilli) < 0){ // time variable wraped around 
     lastMilli = curMilli;
-  }
-  if ((curMilli - resetMilli) > RESET_TIME){
-    integral = integral / 2;
-//    angle = refAngle;
-    resetMilli = curMilli;
   }
 }
 
