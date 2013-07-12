@@ -9,13 +9,13 @@ The actual robot code
 #include "ADXL345.h"
 
 //setup stuff
-//#define DEBUG
+#define DEBUG
 #define LED_PIN 11
 
 //Servo stuff
 #define SERVO1_PIN 10
 #define SERVO2_PIN 12
-#define SPD_WRITE_WAIT 10 // Duration limit on Chaning the Speed in milli
+#define SPD_WRITE_WAIT 5 // Duration limit on Chaning the Speed in milli
 #define SERVO_CENTER 1500 // The center value of the servo (where it should be still)
 #define OUTPUT_GAIN 4
 
@@ -60,6 +60,7 @@ int gy = 0;
 int gz = 0;
 int pos = 0;
 int rpos = 0;
+int maxGyro =0;
 
 float angle = 0.0;
 float refAngle = 0.0;
@@ -70,6 +71,7 @@ float psi = 0.0;
 float alpha = 0.0;
 float derivative = 0.0;
 float rate = 0.0;
+float maxAngle = 0.0;
 
 /*
 -------------- Servo mangment functions --------------------------
@@ -242,10 +244,18 @@ void setup()
   DEBUG_PRINT("Computing Refrence angle...:"); 
   for (int i = 0; i < REF_ANGLE_SAMPLES; i++){
     getAccAngle();
-    refAngle += absMax(theta,psi);
-    delay(10);
+    getGyroValues();
+    maxGyro = absMax(gy,absMax(gx,gz)); 
+    maxAngle = absMax(theta,psi);
+
+    angle = compositeFilter( maxAngle, float(maxGyro), SAMPLE_RATE, angle); //angle tilt and move the clock up
+   
+    refAngle += angle; // Add up the samples
+    delay(SAMPLE_RATE);
   }
-  refAngle /= REF_ANGLE_SAMPLES;
+  refAngle /= REF_ANGLE_SAMPLES; // Divide by the number of samples to get the average
+  angle = 0; // Reset the Filter
+  
   DEBUG_PRINTLN(refAngle);
   digitalWrite(LED_PIN, LOW);
   lastMilli = millis();
@@ -262,8 +272,8 @@ void loop()
 
     rate = (float(curMilli) - float(lastMilli)) / 1000.0; // Calculate the actual rate in seconds (Gryo read outs are in seconds).
 
-    int maxGyro = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
-    float maxAngle = absMax(theta,psi);
+    maxGyro = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
+    maxAngle = absMax(theta,psi);
 
     angle = compositeFilter( maxAngle, float(maxGyro), rate, angle); //angle tilt and move the clock up
     lastMilli = curMilli;  
@@ -305,6 +315,9 @@ void loop()
       DEBUG_PRINT(OUTPUT_GAIN * spd);
       DEBUG_PRINT(" , ");
       DEBUG_PRINTLN(resPos); 
+    }
+    else{
+       DEBUG_PRINTLN("Skipping"); 
     }
   }
   else if((curMilli - lastMilli) < 0){ // time variable wraped around 
