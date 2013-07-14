@@ -17,18 +17,18 @@ The actual robot code
 #define SERVO2_PIN 12
 #define SPD_WRITE_WAIT 5 // Duration limit on Chaning the Speed in milli
 #define SERVO_CENTER 1500 // The center value of the servo (where it should be still)
-#define OUTPUT_GAIN 4
+#define OUTPUT_GAIN -4.0
 
 
 //Cfilter stuff
-#define TIME_CONSTANT 250 // time constant in milli
-#define SAMPLE_RATE   7 // Assumed Sampled rate in milli
+#define TIME_CONSTANT 250.0 // time constant in milli
+#define SAMPLE_RATE   7.0 // Assumed Sampled rate in milli
 
 //PID stuff
 #define KP 0.75
 #define KI 0.45
 #define KD 0.45
-#define INTEGRAL_LIMIT 25
+#define INTEGRAL_LIMIT 11.5
 #define REF_ANGLE_SAMPLES 1000 // Number of samples to calcualte the ref angle
 
 //Debug stuff
@@ -51,17 +51,16 @@ ADXL345 Accel;
 unsigned long curMilli = 0;
 unsigned long lastMilli = 0;
 unsigned long spdMilli = 0;
-unsigned long resetMilli = 0; 
 
-int spd = 0;
 int resPos = 0;
 int gx = 0;
 int gy = 0;
 int gz = 0;
 int pos = 0;
 int rpos = 0;
-int maxGyro =0;
+int maxGyro = 0;
 
+float spd = 0.0;
 float angle = 0.0;
 float refAngle = 0.0;
 float prevError = 0.0;
@@ -89,7 +88,7 @@ void SBRServoBegin(int pin1, int pin2, unsigned long curMilli)
 -------------- Speed Setting function --------------------------
  */
 
-int setSPD(int spd, unsigned long curMilli) 
+int setSPD(float spd, unsigned long curMilli) 
 {
   /*
   This function will set the speed of the servos. It takes spd argument in deg/sec (-300, 300), and uses an aproximated
@@ -107,51 +106,51 @@ int setSPD(int spd, unsigned long curMilli)
   /*
  This is an exact calibration curve, was built by hand using the servocalibrate degree sketch
    */
-  if ( spd >= 300){
+  if ( spd >= 300.0){
     pos = 1700;
     digitalWrite(LED_PIN, LOW);
   }
-  else if ( 180 <= spd && spd < 300){
+  else if ( 180.0 <= spd && spd < 300.0){
     pos =  1559;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 90 <= spd && spd < 180){
+  else if ( 90.0 <= spd && spd < 180.0){
     pos =  1531;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 45 <= spd && spd < 90)
+  else if ( 45.0 <= spd && spd < 90.0)
   {
     pos =  1520;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 22 < spd && spd < 45)
+  else if ( 22.0 < spd && spd < 45.0)
   {
     pos =  1515;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -22 <= spd && spd <= 22) {
+  else if ( -22.0 <= spd && spd <= 22.0) {
     pos =  SERVO_CENTER;
     digitalWrite(LED_PIN, LOW);
   }
-  else if ( -45 < spd && spd < -22)
+  else if ( -45.0 < spd && spd < -22.0)
   {
     pos =  1485;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -90 < spd && spd <= -45)
+  else if ( -90.0 < spd && spd <= -45.0)
   {
     pos =  1479;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -180 < spd && spd <= -90){
+  else if ( -180.0 < spd && spd <= -90.0){
     pos =  1469;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -300 < spd && spd <= -180){
+  else if ( -300.0 < spd && spd <= -180.0){
     pos =  1436;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if (spd <= -300 ) { 
+  else if (spd <= -300.0 ) { 
     pos = 1300;
     digitalWrite(LED_PIN, LOW);
   }
@@ -180,7 +179,7 @@ void Cfilterbegin(){
   gyro.zeroCalibrate(2500,2);
   DEBUG_PRINTLN("done.");
 
-  alpha = float(TIME_CONSTANT) / (float(TIME_CONSTANT) + float(SAMPLE_RATE)); // calculate the scaling coefficent
+  alpha = TIME_CONSTANT / (TIME_CONSTANT + SAMPLE_RATE); // calculate the scaling coefficent
   DEBUG_PRINT("Scaling Coefficent: ");
   DEBUG_PRINTLN(alpha); 
 
@@ -311,6 +310,8 @@ void loop()
       DEBUG_PRINT(integral);
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(derivative);
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(spd);
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(OUTPUT_GAIN * spd);
       DEBUG_PRINT(" , ");
