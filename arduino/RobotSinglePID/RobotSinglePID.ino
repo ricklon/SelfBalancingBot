@@ -8,17 +8,30 @@ The actual robot code
 #include <Servo.h>
 #include "ADXL345.h"
 
-//#define DEBUG
+//setup stuff
+#define DEBUG
+#define LED_PIN 11
+
+//Servo stuff
 #define SERVO1_PIN 10
 #define SERVO2_PIN 12
-#define LED_PIN 11
-#define REF_ANGLE_SAMPLES 500
-#define SPD_WRITE_WAIT 10000 // Duration limit on Chaning the Speed in microseconds
-#define TIME_CONSTANT 130000 // time constant in Micrseconds
-#define SAMPLE_RATE   4000 // Assumed Sampled rate in microseconds
-#define REPORT_RATE   2000 // Assumed Sampled rate in microseconds
+#define SPD_WRITE_WAIT 5 // Duration limit on Chaning the Speed in milli
 #define SERVO_CENTER 1500 // The center value of the servo (where it should be still)
+#define OUTPUT_GAIN -4.0
 
+
+//Cfilter stuff
+#define TIME_CONSTANT 250.0 // time constant in milli
+#define SAMPLE_RATE   7.0 // Assumed Sampled rate in milli
+
+//PID stuff
+#define KP 0.75
+#define KI 0.45
+#define KD 0.45
+#define INTEGRAL_LIMIT 11.5
+#define REF_ANGLE_SAMPLES 1000 // Number of samples to calcualte the ref angle
+
+//Debug stuff
 #ifdef DEBUG
 #define DEBUG_BEGIN(x)   Serial.begin(x); // Fastest Transfer rate?
 #define DEBUG_PRINT(x)    Serial.print (x)
@@ -35,39 +48,47 @@ ITG3200 gyro = ITG3200();
 ADXL345 Accel;
 
 
-unsigned long curMicro = 0, lastMicro = 0, prevMicro = 0, rate = 0, spdMicro = 0; //Varios time stamps
+unsigned long curMilli = 0;
+unsigned long lastMilli = 0;
+unsigned long spdMilli = 0;
 
-int spd = 0, gyroRate = 0, resPos = 0, acc = 0, gx = 0, gy = 0, gz = 0, pos = 0, rpos = 0;
-float kg = 0.0, ka = 0.0, angle = 0, refAngle = 0 , theta = 0, psi = 0, phi = 0, normAngle = 0, normACC = 0, alpha = 0;
+int resPos = 0;
+int gx = 0;
+int gy = 0;
+int gz = 0;
+int pos = 0;
+int rpos = 0;
+int maxGyro = 0;
+
+float spd = 0.0;
+float angle = 0.0;
+float refAngle = 0.0;
+float prevError = 0.0;
+float integral = 0.0;
+float theta = 0.0;
+float psi = 0.0;
+float alpha = 0.0;
+float derivative = 0.0;
+float rate = 0.0;
+float maxAngle = 0.0;
 
 /*
 -------------- Servo mangment functions --------------------------
  */
 
-void SBRServoBegin(int pin1, int pin2, unsigned long curMicro)
+void SBRServoBegin(int pin1, int pin2, unsigned long curMilli)
 {
 
   servo1.attach(pin1);  // attaches the servo 
   servo2.attach(pin2);  
-  spdMicro = curMicro;
-}
-
-/*
--------------- Alternative range mapping function --------------------------
- */
-
-//from: http://rosettacode.org/wiki/Map_range#C.2B.2B
-float mapRange(float s, float a1,float a2,float b1,float b2)  // Linear mapping function
-{
-  return b1 + (s-a1)*(b2-b1)/(a2-a1);
+  spdMilli = curMilli;
 }
 
 /*
 -------------- Speed Setting function --------------------------
  */
 
-
-int setSPD(int spd, unsigned long curMicro) 
+int setSPD(float spd, unsigned long curMilli) 
 {
   /*
   This function will set the speed of the servos. It takes spd argument in deg/sec (-300, 300), and uses an aproximated
@@ -75,75 +96,67 @@ int setSPD(int spd, unsigned long curMicro)
    lag check that will immedately return if there wasn't enough time between calls to the function
    */
 
-  unsigned long dur = curMicro - spdMicro;
+  unsigned long dur = curMilli - spdMilli;
 
   if ( dur < SPD_WRITE_WAIT){ // return -1 if we haven't passed through the time limit, HOW do we prevent this from overflowing?
     return -1;
   } 
-  spdMicro = curMicro; // Setting speed, so update clock
+  spdMilli = curMilli; // Setting speed, so update clock
 
   /*
- This is an aproximated calibration curve, was built by hand using the servocalibrate degree sketch
+ This is an exact calibration curve, was built by hand using the servocalibrate degree sketch
    */
-  if ( spd >= 200){
+  if ( spd >= 300.0){
     pos = 1700;
     digitalWrite(LED_PIN, LOW);
   }
-  else if ( 100 <= spd && spd < 200){
-    pos =  1650;
-   digitalWrite(LED_PIN, HIGH); 
-  }
-  else if ( 20 <= spd && spd < 100){
-    pos =  1600;
+  else if ( 180.0 <= spd && spd < 300.0){
+    pos =  1559;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 15 <= spd && spd < 20){
-    pos =  1575;
+  else if ( 90.0 <= spd && spd < 180.0){
+    pos =  1531;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 10 <= spd && spd < 15)
+  else if ( 45.0 <= spd && spd < 90.0)
   {
-     pos =  1550;
+    pos =  1520;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( 5 < spd && spd < 10)
+  else if ( 22.0 < spd && spd < 45.0)
   {
-     pos =  1525;
+    pos =  1515;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -5 <= spd && spd <= 5) {
+  else if ( -22.0 <= spd && spd <= 22.0) {
     pos =  SERVO_CENTER;
     digitalWrite(LED_PIN, LOW);
   }
-  else if ( -10 < spd && spd < -5)
+  else if ( -45.0 < spd && spd < -22.0)
   {
-     pos =  1475;
+    pos =  1485;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -15 < spd && spd <= -10)
+  else if ( -90.0 < spd && spd <= -45.0)
   {
-    pos =  1450;
+    pos =  1479;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -20 < spd && spd <= -15){
-    pos =  1425;
+  else if ( -180.0 < spd && spd <= -90.0){
+    pos =  1469;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -100 < spd && spd <= -20){
-    pos =  1400;
+  else if ( -300.0 < spd && spd <= -180.0){
+    pos =  1436;
     digitalWrite(LED_PIN, HIGH);
   }
-  else if ( -200 < spd && spd <= -100){
-    pos =  1350;
-    digitalWrite(LED_PIN, HIGH);
-  }
-  else if (spd <= -200 ) { 
+  else if (spd <= -300.0 ) { 
     pos = 1300;
     digitalWrite(LED_PIN, LOW);
   }
 
   servo1.writeMicroseconds(pos);              // Actully setting the speed.
-  rpos = mapRange(pos, 1300, 1700, 1700, 1300); // Reverse the direction for the other side
+  rpos = map(pos, 1300, 1700, 1700, 1300); // Reverse the direction for the other side
   servo2.writeMicroseconds(rpos);
   return abs(pos - SERVO_CENTER); //  return the pulse width value as an offset from center.
 }
@@ -166,7 +179,7 @@ void Cfilterbegin(){
   gyro.zeroCalibrate(2500,2);
   DEBUG_PRINTLN("done.");
 
-  alpha = float(TIME_CONSTANT) / (float(TIME_CONSTANT) + float(SAMPLE_RATE)); // calculate the scaling coefficent
+  alpha = TIME_CONSTANT / (TIME_CONSTANT + SAMPLE_RATE); // calculate the scaling coefficent
   DEBUG_PRINT("Scaling Coefficent: ");
   DEBUG_PRINTLN(alpha); 
 
@@ -211,8 +224,8 @@ void getGyroValues(){ // Simple reading of gyro values
 
 //------------------ Composite Filter ----------------
 
-float compositeFilter(float acc, float gyro, unsigned long rate, float angle){
-  return alpha * (angle + (gyro * float(rate)))  + (1 - alpha) * acc; // the actual filter
+float compositeFilter(float acc, float gyro, float rate, float angle){
+  return alpha * (angle + (gyro * rate))  + (1 - alpha) * acc; // the actual filter
 }
 
 /*
@@ -230,59 +243,91 @@ void setup()
   DEBUG_PRINT("Computing Refrence angle...:"); 
   for (int i = 0; i < REF_ANGLE_SAMPLES; i++){
     getAccAngle();
-    refAngle += absMax(theta,psi);
-    delay(10);
+    getGyroValues();
+    maxGyro = absMax(gy,absMax(gx,gz)); 
+    maxAngle = absMax(theta,psi);
+
+    angle = compositeFilter( maxAngle, float(maxGyro), SAMPLE_RATE, angle); //angle tilt and move the clock up
+   
+    refAngle += angle; // Add up the samples
+    delay(SAMPLE_RATE);
   }
-  refAngle /= REF_ANGLE_SAMPLES;
+  refAngle /= REF_ANGLE_SAMPLES; // Divide by the number of samples to get the average
+  angle = 0; // Reset the Filter
+  
   DEBUG_PRINTLN(refAngle);
-  SBRServoBegin(SERVO1_PIN, SERVO2_PIN, lastMicro);
   digitalWrite(LED_PIN, LOW);
+  lastMilli = millis();
+  SBRServoBegin(SERVO1_PIN, SERVO2_PIN, lastMilli);
 }
 
 void loop() 
 {
-  curMicro = micros();
+  curMilli = millis();
 
-  if ((curMicro - lastMicro) > SAMPLE_RATE){
+  if ((curMilli - lastMilli) > SAMPLE_RATE){
     getAccAngle(); // Read the devices
     getGyroValues();
 
-    rate = (curMicro - prevMicro) / 100000; // Calculate the actual rate in seconds (Gryo read outs are in seconds).
+    rate = (float(curMilli) - float(lastMilli)) / 1000.0; // Calculate the actual rate in seconds (Gryo read outs are in seconds).
 
-    gyroRate = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
-    acc = absMax(theta,psi);
+    maxGyro = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
+    maxAngle = absMax(theta,psi);
 
-    angle = compositeFilter( acc, gyroRate, rate, angle); //angle tilt and move the clock up
-    lastMicro = curMicro;  
+    angle = compositeFilter( maxAngle, float(maxGyro), rate, angle); //angle tilt and move the clock up
+    lastMilli = curMilli;  
 
-    ka = 0.75;
-    kg = 0.10;
+    float error =  angle - refAngle;
 
-    spd = (kg * gyroRate) + (ka * (angle - refAngle)); // Compute the speed to set the acceleromter
+    if (-3 < error && error < 3){ // error thresholding
+      error = 0;
+    }
 
-    resPos = setSPD(spd, curMicro); //set the Speed 
+    integral = constrain(integral + error * rate, -INTEGRAL_LIMIT, INTEGRAL_LIMIT); // constrain the integral so we don't have to relax from really far values 
+    derivative = (error - prevError) / rate;
+    spd = (KP * error) + (KI * integral) + (KD * derivative); // Compute the speed to set the acceleromter
+    resPos = setSPD(OUTPUT_GAIN * spd, curMilli); //set the Speed 
+    prevError = error;    
 
     // Debug Output
     if (resPos  != -1){ // Only print when we change something
-      DEBUG_PRINT(curMicro);
+      DEBUG_PRINT(curMilli);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(acc);
+      DEBUG_PRINT(maxAngle);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(gyroRate);
+      DEBUG_PRINT(maxGyro);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(angle - refAngle); // remove the refrence from the display
+      DEBUG_PRINT(angle); // remove the refrence from the display
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(maxAngle - angle); // remove the refrence from the display
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(error);
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(rate);
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(error * rate );
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(integral);
+      DEBUG_PRINT(" , ");
+      DEBUG_PRINT(derivative);
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(spd);
       DEBUG_PRINT(" , ");
+      DEBUG_PRINT(OUTPUT_GAIN * spd);
+      DEBUG_PRINT(" , ");
       DEBUG_PRINTLN(resPos); 
     }
-
+    else{
+       DEBUG_PRINTLN("Skipping"); 
+    }
   }
-  else if((curMicro - lastMicro) < 0){ // time variable wraped around 
-    lastMicro = curMicro;
+  else if((curMilli - lastMilli) < 0){ // time variable wraped around 
+    lastMilli = curMilli;
   }
-  prevMicro = curMicro; // needed for loop length calculation
 }
+
+
+
 
 
 

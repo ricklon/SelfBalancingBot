@@ -1,8 +1,6 @@
 //SBRServo Calibration library
 //by James "Shridatt" Sugrim
-
 #include <Servo.h>
-
 #define SERVO1_PIN 10
 #define SERVO2_PIN 12
 #define LED_PIN 11
@@ -53,18 +51,18 @@ void loop()
     //  int pos = analogRead(A0);
     //   pos =  map(pos, 0, 1023, 1250, 1750);
     servo1.writeMicroseconds(pos); // tell servo1 to go to position in variable 'pos'
-    rpos = map(pos, 1300, 1700, 1700, 1300);
+    rpos = map(pos, 1300, 1700, 1700, 1300); // reverse for the other side
     servo2.writeMicroseconds(rpos); // tell servo2 to go to position in variable 'pos'
   }
   else {
     digitalWrite(LED_PIN, LOW);
-    servo1.writeMicroseconds(SERVO_ZERO); // tell servo1 to go to position in variable 'pos' 
-    servo2.writeMicroseconds(SERVO_ZERO); // tell servo2 to go to position in variable 'pos'
+    servo1.writeMicroseconds(SERVO_ZERO); // tell servo1 to go to position SERVO_ZERO
+    servo2.writeMicroseconds(SERVO_ZERO); // tell servo2 to go to position SERVO_ZERO
   }
   Serial.print(" Servo1: ");
   Serial.print(servo1.readMicroseconds());
   Serial.print(" Servo2: ");
   Serial.println(servo2.readMicroseconds());
 
-  delay(10000);
+  delay(2000);
 } 
