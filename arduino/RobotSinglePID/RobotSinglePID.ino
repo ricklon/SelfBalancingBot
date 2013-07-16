@@ -17,17 +17,15 @@ The actual robot code
 #define SERVO2_PIN 12
 #define SPD_WRITE_WAIT 5 // Duration limit on Chaning the Speed in milli
 #define SERVO_CENTER 1500 // The center value of the servo (where it should be still)
-#define OUTPUT_GAIN -4.0
-
 
 //Cfilter stuff
 #define TIME_CONSTANT 250.0 // time constant in milli
 #define SAMPLE_RATE   7.0 // Assumed Sampled rate in milli
 
 //PID stuff
-#define KP 0.75
-#define KI 0.45
-#define KD 0.45
+#define KP 15
+#define KI 0.0
+#define KD 0.0
 #define INTEGRAL_LIMIT 11.5
 #define REF_ANGLE_SAMPLES 1000 // Number of samples to calcualte the ref angle
 
@@ -248,13 +246,14 @@ void setup()
     maxAngle = absMax(theta,psi);
 
     angle = compositeFilter( maxAngle, float(maxGyro), SAMPLE_RATE, angle); //angle tilt and move the clock up
-   
+    DEBUG_PRINTLN("Ref angle calc:);
+    DEBUG_PRINTLN(angle);
     refAngle += angle; // Add up the samples
     delay(SAMPLE_RATE);
   }
   refAngle /= REF_ANGLE_SAMPLES; // Divide by the number of samples to get the average
   angle = 0; // Reset the Filter
-  
+
   DEBUG_PRINTLN(refAngle);
   digitalWrite(LED_PIN, LOW);
   lastMilli = millis();
@@ -286,7 +285,7 @@ void loop()
     integral = constrain(integral + error * rate, -INTEGRAL_LIMIT, INTEGRAL_LIMIT); // constrain the integral so we don't have to relax from really far values 
     derivative = (error - prevError) / rate;
     spd = (KP * error) + (KI * integral) + (KD * derivative); // Compute the speed to set the acceleromter
-    resPos = setSPD(OUTPUT_GAIN * spd, curMilli); //set the Speed 
+    resPos = setSPD(spd, curMilli); //set the Speed 
     prevError = error;    
 
     // Debug Output
@@ -313,18 +312,17 @@ void loop()
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(spd);
       DEBUG_PRINT(" , ");
-      DEBUG_PRINT(OUTPUT_GAIN * spd);
-      DEBUG_PRINT(" , ");
       DEBUG_PRINTLN(resPos); 
     }
     else{
-       DEBUG_PRINTLN("Skipping"); 
+      DEBUG_PRINTLN("Skipping"); 
     }
   }
   else if((curMilli - lastMilli) < 0){ // time variable wraped around 
     lastMilli = curMilli;
   }
 }
+
 
 
 
