@@ -283,13 +283,13 @@ void loop()
     angle = LPF(maxAngle); 
     lastMilli = curMilli;  
     if (abs(refAngle - angle) < 5){
-      spd = (KA * (refAngle - angle)) + (KG * maxGyro); // Compute the speed to set the acceleromter
+      spd += (KA * (refAngle - angle)) + (KG * maxGyro) * SAMPLE_RATE; // Compute the speed to set the acceleromter
     }
     else if (abs(refAngle - angle) > 5 && abs(refAngle - angle) < 15 ){
-      spd = BADFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro); // Compute the speed to set the acceleromter
+      spd += BADFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) * SAMPLE_RATE; // Compute the speed to set the acceleromter
     }
     else {
-      spd = BADFACTOR * BADFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro); // Compute the speed to set the acceleromter
+      spd += BADFACTOR * BADFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) * SAMPLE_RATE; // Compute the speed to set the acceleromter
     }
     resPos = setSPD(-spd, curMilli); //set the Speed 
 
