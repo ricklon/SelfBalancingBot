@@ -3,7 +3,7 @@ The actual robot code
  */
 
 #include <Wire.h>
-#include <math.h>
+//#include <math.h>
 #include <ITG3200.h>
 #include <Servo.h>
 #include "ADXL345.h"
@@ -20,15 +20,16 @@ The actual robot code
 
 //LPF stuff
 #define FILTER_CONSTANT 0.90
-#define PASTLENGTH 100
+#define PASTLENGTH 50
 #define SAMPLE_RATE 5
 
 //Ref Stuff
-#define REF_SAMPLES 1000
+#define REF_SAMPLES 20
 
-#define KA 4.0
-#define KG 2.5
-#define BADFACTOR 10
+#define KA .70
+#define KG .45
+#define KI .20
+#define SCALEFACTOR 20
 
 //Debug stuff
 #ifdef DEBUG
@@ -61,6 +62,7 @@ int maxGyro = 0;
 int filterIndex = 0;
 
 float spd = 0.0;
+float integral = 0.0;
 float angle = 0.0;
 float theta = 0.0;
 float psi = 0.0;
@@ -203,15 +205,16 @@ void getAccAngle() { //compute The actual theta and psi values from the Accelero
   Accel.get_Gxyz(acc_data);
   /* 
    The correct calculation
-   */
+   
   theta = atan(acc_data[0]/sqrt(acc_data[1]*acc_data[1] + acc_data[2]*acc_data[2]))*180/PI; 
   psi = atan(acc_data[1]/sqrt(acc_data[0]*acc_data[0] + acc_data[2]*acc_data[2]))*180/PI;
-  /*
+
    phi=  atan(sqrt(acc_data[0]*acc_data[0] + acc_data[1]*acc_data[1])/acc_data[2])*180/PI; // Not needed since we only care bout x and y
-   
+  */
+  
    theta = (acc_data[0]/sqrt(acc_data[1]*acc_data[1] + acc_data[2]*acc_data[2]))*180/PI; //drop atan for computation speed, small angle aproximation
    psi = (acc_data[1]/sqrt(acc_data[0]*acc_data[0] + acc_data[2]*acc_data[2]))*180/PI;
-   */
+   
 }
 
 // ------------------ read gyroscope angles ---------------------
@@ -273,23 +276,27 @@ void loop()
 {
   curMilli = millis();
 
+
   if ((curMilli - lastMilli) > SAMPLE_RATE){
+    lastMilli = curMilli;
     getAccAngle(); // Read the devices
     getGyroValues();
 
     maxGyro = absMax(gy,absMax(gx,gz)); //Since we can react to only one direction, it is assume to be maximal
     maxAngle = absMax(theta,psi);
 
-    angle = LPF(maxAngle); 
-    lastMilli = curMilli;  
+    angle = LPF(maxAngle);
+    integral += (refAngle - angle) * SAMPLE_RATE;
+    integral = constrain(integral, -100, 100);
+
     if (abs(refAngle - angle) < 5){
-      spd += (KA * (refAngle - angle)) + (KG * maxGyro) * SAMPLE_RATE; // Compute the speed to set the acceleromter
+      spd = SCALEFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) + (KI * integral); 
     }
-    else if (abs(refAngle - angle) > 5 && abs(refAngle - angle) < 15 ){
-      spd += BADFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) * SAMPLE_RATE; // Compute the speed to set the acceleromter
+    else if (abs(refAngle - angle) > 5 && abs(refAngle - angle) < 10 ){
+      spd = 2 * SCALEFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) + (KI * integral); 
     }
     else {
-      spd += BADFACTOR * BADFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) * SAMPLE_RATE; // Compute the speed to set the acceleromter
+      spd = 3 * SCALEFACTOR * (KA * (refAngle - angle)) + (KG * maxGyro) + (KI * integral); 
     }
     resPos = setSPD(-spd, curMilli); //set the Speed 
 
@@ -297,8 +304,6 @@ void loop()
     // Debug Output
     if (resPos  != -1){ // Only print when we change something
       DEBUG_PRINT(curMilli);
-      DEBUG_PRINT(" , ");
-      DEBUG_PRINT(filterIndex);
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(maxAngle);
       DEBUG_PRINT(" , ");
@@ -308,18 +313,22 @@ void loop()
       DEBUG_PRINT(" , ");
       DEBUG_PRINT(refAngle - angle); 
       DEBUG_PRINT(" , ");
+      DEBUG_PRINT(integral); 
+      DEBUG_PRINT(" , ");
       DEBUG_PRINT(spd);
       DEBUG_PRINT(" , ");
       DEBUG_PRINTLN(resPos); 
     }
     else{
-    //  DEBUG_PRINTLN("Skipping"); 
+      //  DEBUG_PRINTLN("Skipping"); 
     }
   }
   else if((curMilli - lastMilli) < 0){ // time variable wraped around 
     lastMilli = curMilli;
   }
 }
+
+
 
 
 
