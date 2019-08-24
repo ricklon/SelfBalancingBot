@@ -1,0 +1,36 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/python:3.7.4
+      environment: # environment variables for primary container
+          TEST_ENV_VAR: true
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+
+
+    working_directory: ~/workarea
+    steps:
+      - checkout:
+          #path: ~/Arduino/
+      # specify any bash command here prefixed with `run: `
+      - run: pwd
+      - run: sudo apt-get install curl
+      - run: cd ~/
+      - run: pwd
+      - run: curl -O -J -L https://github.com/arduino/arduino-cli/releases/download/0.4.0/arduino-cli_0.4.0_Linux_64bit.tar.gz
+      - run: tar xvzf arduino-cli_0.4.0_Linux_64bit.tar.gz
+      - run: ls
+      - run: pwd
+      # - run: cp -r ~/Arduino/libraries/ds1631/examples/DS1631_OneDevice ~/Arduino/
+      - run: ./arduino-cli core update-index
+      - run: ./arduino-cli core install arduino:avr
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/arduino/Robot
+      
+      
