@@ -7,7 +7,7 @@ jobs:
     docker:
       # specify the version
       - image: circleci/python:3.7.4
-      environment: # environment variables for primary container
+        environment: # environment variables for primary container
           TEST_ENV_VAR: true
 
       # Specify service dependencies here if necessary
