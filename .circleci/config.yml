@@ -15,7 +15,7 @@ jobs:
       # documented at https://circleci.com/docs/2.0/circleci-images/
 
 
-    working_directory: ~/
+    working_directory: ~/arduino
     steps:
       - checkout:
           #path: ~/Arduino/
