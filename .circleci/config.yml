@@ -20,10 +20,12 @@ jobs:
       - checkout:
           #path: ~/Arduino/
       # specify any bash command here prefixed with `run: `
-      - run: pwd
-      - run: sudo apt-get install curl
-      - run: cd ~/
-      - run: pwd
+     - run: |
+         sudo apt-get install curl tree      
+         pwd
+         tree ~/
+         cd ~/
+         pwd
       - run: curl -O -J -L https://github.com/arduino/arduino-cli/releases/download/0.4.0/arduino-cli_0.4.0_Linux_64bit.tar.gz
       - run: tar xvzf arduino-cli_0.4.0_Linux_64bit.tar.gz
       - run: ls
