@@ -3,7 +3,8 @@
 // This example code is in the public domain.
 #include <Servo.h>
 
-
+#define SERVO1_PIN 10
+#define SERVO2_PIN 17
 
 Servo servo1;
 Servo servo2;
