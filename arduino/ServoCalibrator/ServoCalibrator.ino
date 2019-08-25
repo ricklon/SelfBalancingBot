@@ -5,6 +5,8 @@
 
 #define SERVO1_PIN 10
 #define SERVO2_PIN 17
+#define LED_PIN 11
+#define POT_PIN 18
 
 Servo servo1;
 Servo servo2;
