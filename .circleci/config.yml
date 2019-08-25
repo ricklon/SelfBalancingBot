@@ -15,7 +15,7 @@ jobs:
       # documented at https://circleci.com/docs/2.0/circleci-images/
 
 
-    working_directory: ~/workarea
+    working_directory: ~/
     steps:
       - checkout:
           #path: ~/Arduino/
@@ -26,13 +26,12 @@ jobs:
           tree ~/
           cd ~/
           pwd
-      - run: curl -O -J -L https://github.com/arduino/arduino-cli/releases/download/0.4.0/arduino-cli_0.4.0_Linux_64bit.tar.gz
-      - run: tar xvzf arduino-cli_0.4.0_Linux_64bit.tar.gz
-      - run: ls
-      - run: pwd
+      - run: |
+          curl -O -J -L https://github.com/arduino/arduino-cli/releases/download/0.4.0/arduino-cli_0.4.0_Linux_64bit.tar.gz
+          tar xvzf arduino-cli_0.4.0_Linux_64bit.tar.gz
       # - run: cp -r ~/Arduino/libraries/ds1631/examples/DS1631_OneDevice ~/Arduino/
       - run: ./arduino-cli core update-index
       - run: ./arduino-cli core install arduino:avr
-      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/workarea/arduino/Robot
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/arduino/Robot
       
       
