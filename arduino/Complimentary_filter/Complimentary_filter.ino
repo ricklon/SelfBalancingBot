@@ -11,6 +11,8 @@
 #include <ITG3200.h>
 #include <Cfilter.h>
 
+dsdfgsdfg
+
 unsigned long curMicro = 0, lastMicro = 0, prevMicro = 0, rate = 0;
 
 float angle = 0;
