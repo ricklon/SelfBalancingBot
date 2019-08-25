@@ -246,7 +246,7 @@ void setup()
     maxAngle = absMax(theta,psi);
 
     angle = compositeFilter( maxAngle, float(maxGyro), SAMPLE_RATE, angle); //angle tilt and move the clock up
-    DEBUG_PRINTLN("Ref angle calc:);
+    DEBUG_PRINTLN("Ref angle calc: ");
     DEBUG_PRINTLN(angle);
     refAngle += angle; // Add up the samples
     delay(SAMPLE_RATE);
