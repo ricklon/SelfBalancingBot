@@ -35,6 +35,7 @@ jobs:
       - run: ./arduino-cli core install arduino:avr
       - run: ./arduino-cli lib search Servo
       - run: ./arduino-cli lib install Servo
+      - run: ./arduino-cli lib install Wire
       - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Robot
       - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Complimentary_filter  
       - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Robot
