@@ -36,5 +36,14 @@ jobs:
       - run: ./arduino-cli lib search Servo
       - run: ./arduino-cli lib install Servo
       - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Robot
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Complimentary_filter  
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Robot
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/RobotLPF
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/RobotSingle
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/RobotSinglePD
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/RobotSinglePID
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/ServoCalibrator
+      - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Sweep2ServosTeensy
+
       
       
