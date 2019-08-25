@@ -33,6 +33,8 @@ jobs:
       # - run: cp -r ~/Arduino/libraries/ds1631/examples/DS1631_OneDevice ~/Arduino/
       - run: ./arduino-cli core update-index
       - run: ./arduino-cli core install arduino:avr
+      - run: ./arduino-cli lib search Servo
+      - run: ./arduino-cli lib install Servo
       - run: ./arduino-cli compile --fqbn arduino:avr:uno  ~/Arduino/Robot
       
       
