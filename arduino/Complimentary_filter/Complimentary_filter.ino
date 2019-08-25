@@ -13,7 +13,7 @@
 
 unsigned long curMicro = 0, lastMicro = 0, prevMicro = 0, rate = 0;
 
-
+float angle = 0;
 
 
 //------------- Begin Aurdino doing stuff ---------------
